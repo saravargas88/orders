@@ -27,49 +27,63 @@ logger = logging.getLogger("flask.app")
 
 
 ######################################################################
-#  A C C O U N T   M O D E L
+#  O R D E R    M O D E L
 ######################################################################
-class Account(db.Model, PersistentBase):
+class Order(db.Model, PersistentBase):
     """
-    Class that represents an Account
+    Class that represents an Order
     """
 
     # Table Schema
+    #ORDER ID
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), nullable=False)
+    #USER ID
     userid = db.Column(db.String(16), nullable=False)
-    email = db.Column(db.String(64), nullable=False)
-    phone_number = db.Column(db.String(32), nullable=True)  # phone number is optional
-    date_joined = db.Column(db.Date(), nullable=False, default=date.today())
-    addresses = db.relationship("Address", backref="account", passive_deletes=True)
+    #Order Address 
+    #address= ???
+    #STATUS OS ORDER
+    status = db.Column(db.String(64), nullable=False, default = "PENDING")
+    #DATE OF CREATION
+    created_at= db.Column(db.Date(), nullable=False, default=date.today())
+    #UPDATE DATE 
+    updated_at= db.Column(db.Date(), nullable=False)
+    #ITEMS IN ORDER
+    items = db.relationship("Item", backref="order", passive_deletes=True)
+    #SHIPPING ADDRESS which should be specified by accounts 
+    shipping_address_id = db.Column(db.Integer, nullable=False)
+   
 
     def __repr__(self):
-        return f"<Account {self.name} id=[{self.id}]>"
+        return f"<Order id=[{self.id}]>"
 
     def serialize(self):
-        """Converts an Account into a dictionary"""
-        account = {
+    """Converts an Order instance into a dictionary."""
+        Order = {
             "id": self.id,
-            "name": self.name,
             "userid": self.userid,
-            "email": self.email,
-            "phone_number": self.phone_number,
-            "date_joined": self.date_joined.isoformat(),
-            "addresses": [],
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "shipping_address_id": self.shipping_address_id,
+            "items": [],
         }
-        for address in self.addresses:
-            account["addresses"].append(address.serialize())
-        return account
+
+        # Serialize related items
+        for item in self.items:
+            order["items"].append(item.serialize())
+
+    return order
+
 
     def deserialize(self, data):
         """
-        Populates an Account from a dictionary
+        Populates an Order from a dictionary
 
         Args:
             data (dict): A dictionary containing the resource data
         """
         try:
-            self.name = data["name"]
+            self.id = data["id"]
             self.userid = data["userid"]
             self.email = data["email"]
             self.phone_number = data.get("phone_number")
